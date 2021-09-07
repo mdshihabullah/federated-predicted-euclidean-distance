@@ -1,2 +1,13 @@
-# federated-distance-calculation
-This is my master thesis project in SDU, Denmark
+# Federated Distance and Similarity Measure Calculation for Unsupervised Machine Learning Algorithm
+
+## Project Overview:
+
+In today’s world, the application of machine learning techniques and algorithms has proven to add realistic values and solutions in all spectrum of fields and aspects of life. If broadly classified, unsupervised machine learning algorithms  are one of the major categories where the training data consists of input without any corresponding target values or labelling.
+
+In traditional machine learning, data from different sites need to be sent and aggregated in a centralised location for training models which is highly vulnerable to data breaches and leakage in many ways. Furthermore, it may break many data privacy policies and related laws from many countries like GDPR(European Union), LGPD(Brazil), PDPA(Thailand), PDPB(India), PDPL(China), Digital Charter Implementation Act(Canada) etc., which can be a major challenge for useful machine learning implementation. 
+
+Due to above mentioned reasons, privacy-preserving machine learning solutions like federated machine learning can be used to train the machine learning algorithms by using multiple local datasets to create a shared global model without exchanging training dataset in a central location. Consequently, allows personal data to remain in local sites, reducing the possibility of personal data breaches and also helping to provide personalized solutions by preserving data privacy.  
+
+One of the most common unsupervised ML problems is clustering where the data points in dataset(s) need to be grouped based on their intra-group and inter-group distances. In order to find cluster(s) in the dataset, various distance metrics are considered where a distance function provides distance between the elements of a set. If the distance is zero then elements are equivalent else they are different from each other. Using a distance function is vitally important and unavoidable to perform clustering or grouping of the elements of the dataset. The choice of distance function, metric and how the distances are calculated has significant impact on the clustering result and performance respectively.
+
+However, in order to perform unsupervised clustering, every local model with its local dataset needs to share their computed distance function by preserving privacy and the global model needs to calculate the aggregated distances of all the local dataset without knowing its feature and the datapoint from different source of the dataset. In this project, we try to address how the distance function for various distance metrics like Euclidean distance, Pearson correlation coefficient etc can be calculated and aggregated in the federated machine learning environment.
