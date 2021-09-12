@@ -1,11 +1,10 @@
 # Some of the imports will not be necessary in production
-import math
 import numpy as np
 from sklearn.datasets import make_blobs
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.linear_model import LinearRegression, HuberRegressor, TheilSenRegressor
 from sklearn.cluster import AgglomerativeClustering
-from sklearn.metrics import confusion_matrix, accuracy_score
+from sklearn.metrics import  accuracy_score, f1_score, silhouette_score, calinski_harabasz_score,davies_bouldin_score
 from sklearn.metrics.cluster import adjusted_rand_score, adjusted_mutual_info_score
 from scipy.linalg import block_diag
 import matplotlib.pyplot as plt
@@ -20,9 +19,9 @@ def generate_clustered_dataset(dimension,total_no_samples,no_of_cluster, random_
     return clustered_dataset, true_label, centroids
 
 
-def plot3dwithspike(width, height, datapoints, spikes, myLabel=None) :
+def plot3dwithspike(width, height, title, datapoints, spikes, myLabel=None) :
     plt.figure(figsize=(width,height))
-    plt.title("Clusters with random points", fontsize='medium')
+    plt.title(title, fontsize='medium')
     ax = plt.axes(projection='3d')
     ax.scatter3D(datapoints[:, 0], datapoints[:,1], datapoints[:,2], c=myLabel, marker='o',  s=15, edgecolor='k')
     ax.scatter3D(spikes[:, 0], spikes[:, 1], spikes[:, 2], s = 80, color = 'k')
@@ -66,13 +65,19 @@ def regression_per_client(data, euc_dist_data_spike, regressor="Huber"):
         model = TheilSenRegressor().fit(local_fed_dist,euc_dist_data)
         return [model.coef_.item(),model.intercept_]
 
+
+# Declare for experimental purpose
+dimension = 3
+total_no_samples = 500
+no_of_cluster = 10
+
 # Generated dataset and use centroids as spike-in points
-clustered_dataset, true_label, spikes = generate_clustered_dataset(dimension=12000,
-                                                                   total_no_samples=500,
-                                                                   no_of_cluster= 9, random_state=7)
+clustered_dataset, true_label, spikes = generate_clustered_dataset(dimension=dimension,
+                                                                   total_no_samples=total_no_samples,
+                                                                   no_of_cluster= no_of_cluster, random_state=7)
 
 # Plot the dataset and spike-in points for visualization
-plot3dwithspike(width=9, height=6, datapoints = clustered_dataset, spikes=spikes, myLabel=true_label)
+plot3dwithspike(width=9, height=6, title= "Clustering with actual labels", datapoints = clustered_dataset, spikes=spikes, myLabel=true_label)
 
 # Spliting the aggregated dataset for two participants
 D1,D2 = np.array_split(clustered_dataset, 2)
@@ -97,7 +102,7 @@ slope_intercept_D2 = regression_per_client(data= D2,
                                            euc_dist_data_spike= euc_dist_D2_spikes,
                                            regressor="Linear")
 
-######### Cordinator Based Computation ########
+######### Coordinator Based Computation ########
 ################################################
 
 def calc_fed_euc_dist(sldm_array):
@@ -106,8 +111,8 @@ def calc_fed_euc_dist(sldm_array):
     # number of all samples * number of all samples
     return euclidean_distances(combined_eucl)
 
-def agglomerative_clustering(precomputed_dist_matrix, linkage='complete'):
-    label = AgglomerativeClustering(affinity='precomputed', linkage=linkage).fit_predict(precomputed_dist_matrix)
+def agglomerative_clustering(no_of_cluster, precomputed_dist_matrix, linkage='complete'):
+    label = AgglomerativeClustering(n_clusters=no_of_cluster, affinity='precomputed', linkage=linkage).fit_predict(precomputed_dist_matrix)
     #Getting unique labels
     u_labels = np.unique(label)
     pred_label =  np.array(label).tolist()
@@ -148,11 +153,40 @@ def calc_pred_dist_matrix(global_Mx, global_fed_euc_dist, global_Cx):
     # print("Predicted Global Distance Matrix: \n",PGDM)
     return PGDM
 
+# Calculating global true distance matrix
+global_true_euc_dist = euclidean_distances(clustered_dataset)
+
+# Perform agglomerative_clustering using the above precomputed global federated distance matrix
+label = AgglomerativeClustering(n_clusters=no_of_cluster, affinity='precomputed', linkage='complete').fit_predict(global_true_euc_dist)
+u_labels_2 = np.unique(label)
+pred_label_gtdm =  np.array(label).tolist()
+
+#plotting the clustering results in 2D:
+plt.figure(figsize=(15,15))
+plt.subplots_adjust(bottom=.05, top=.9, left=.05, right=.95)
+plt.subplot(325)
+plt.title("Clustering with true distance matrix", fontsize='medium')
+for i in u_labels_2:
+    plt.scatter(clustered_dataset[label == i , 0] , clustered_dataset[label == i , 1] , label = i)
+plt.scatter(spikes[:,0] , spikes[:,1] , s = 80, color = 'k')
+plt.legend()
+plt.show()
+
+#plotting the clustering results in 3D:
+plot3dwithspike(width=9, height=6, title= "Clustering with true distance matrix", datapoints = clustered_dataset, spikes=spikes, myLabel=pred_label_gtdm)
+
+print("Adjusted Similarity score of the clustering with true distance in (%) :", adjusted_rand_score(true_label, pred_label_gtdm)*100)
+print("Adjusted mutual info score of the clustering with true distance in (%) :", adjusted_mutual_info_score(true_label, pred_label_gtdm)*100)
+print("F1 score after clustering with true distance:",f1_score(true_label, pred_label_gtdm, average='micro'))
+print("Silhouette Score: ",silhouette_score(global_true_euc_dist, pred_label_gtdm, metric='precomputed')) 
+print("Calinski-Harabasz Score: ", calinski_harabasz_score(global_true_euc_dist, pred_label_gtdm))
+# More the Davies-Bouldin Score is closer to 0, the better clustering has been of the data-points
+print("Davies-Bouldin Score: ", davies_bouldin_score(global_true_euc_dist, pred_label_gtdm))
 # Calculating global federated distance matrix
 global_fed_euc_dist = calc_fed_euc_dist([euc_dist_D1_spikes, euc_dist_D2_spikes])
 
 # Perform agglomerative_clustering using the above precomputed global federated distance matrix
-label_gfdm, u_labels_gfdm, pred_label_gfdm = agglomerative_clustering(global_fed_euc_dist, linkage='complete')
+label_gfdm, u_labels_gfdm, pred_label_gfdm = agglomerative_clustering(no_of_cluster, global_fed_euc_dist, linkage='complete')
 
 #plotting the clustering results:
 plotClusteringResult(width=15, height=15, 
@@ -160,13 +194,19 @@ plotClusteringResult(width=15, height=15,
                      label = label_gfdm,
                      labels_by_model=u_labels_gfdm,
                      clustered_dataset = clustered_dataset,
-                     spikes = spikes)                   
+                     spikes = spikes)
+
+#plotting the clustering results in 3D:
+plot3dwithspike(width=9, height=6, title= "Clustering with globally federated distance matrix", datapoints = clustered_dataset, spikes=spikes, myLabel=pred_label_gfdm)
 
 # Reference: https://stackoverflow.com/questions/58069814/python-accuracy-check-giving-0-result-for-flipped-classification                
 print("Adjusted Similarity score of the clustering with federated distance in (%) :", adjusted_rand_score(true_label, pred_label_gfdm)*100)
 print("Adjusted mutual info score of the clustering with federated distance in (%) :", adjusted_mutual_info_score(true_label, pred_label_gfdm)*100)
 print("Accuracy after clustering with federated distance in (%) :",accuracy_score(true_label, pred_label_gfdm)*100)
-
+print("F1 score after clustering with federated distance:",f1_score(true_label, pred_label_gfdm, average='micro'))
+print("Silhouette Score: ",silhouette_score(global_fed_euc_dist, pred_label_gfdm, metric='precomputed')) 
+print("Calinski-Harabasz Score: ", calinski_harabasz_score(global_fed_euc_dist, pred_label_gfdm))
+print("Davies-Bouldin Score: ", davies_bouldin_score(global_fed_euc_dist, pred_label_gfdm))
 # Calculate global slopes and intercepts for each datapoints in clustered_dataset
 MxCx = []
 MxCx.append(slope_intercept_D1)
@@ -179,7 +219,7 @@ global_pred_euc_dist = calc_pred_dist_matrix(global_Mx, global_fed_euc_dist, glo
 
 
 # Perform agglomerative_clustering using the above precomputed global predicted distance matrix
-label = AgglomerativeClustering(affinity='precomputed', linkage='complete').fit_predict(global_pred_euc_dist)
+label = AgglomerativeClustering(n_clusters=no_of_cluster, affinity='precomputed', linkage='complete').fit_predict(global_pred_euc_dist)
 #Getting unique labels
 u_labels_2 = np.unique(label)
 pred_label_2 =  np.array(label).tolist()
@@ -195,19 +235,25 @@ plt.scatter(spikes[:,0] , spikes[:,1] , s = 80, color = 'k')
 plt.legend()
 plt.show()
 
+#plotting the clustering results in 3D:
+plot3dwithspike(width=9, height=6, title= "Clustering with globally predicted distance matrix", datapoints = clustered_dataset, spikes=spikes, myLabel=pred_label_2)
+
 print("Adjusted Similarity score of the clustering with predicted distance in (%) :", adjusted_rand_score(true_label, pred_label_2)*100)
 print("Adjusted mutual info score of the clustering with predicted distance in (%) :", adjusted_mutual_info_score(true_label, pred_label_2)*100)
 print("Accuracy after clustering with predicted distance in (%) :",accuracy_score(true_label, pred_label_2)*100)
-
+print("F1 score after clustering with predicted distance:",f1_score(true_label, pred_label_2, average='micro'))
+print("Silhouette Score: ",silhouette_score(global_pred_euc_dist, pred_label_2, metric='precomputed')) 
+print("Calinski-Harabasz Score: ", calinski_harabasz_score(global_pred_euc_dist, pred_label_2))
+print("Davies-Bouldin Score: ", davies_bouldin_score(global_pred_euc_dist, pred_label_2))
 # Generating 3 heatmaps using actual, federated and predicted distance matrices
 plotDistanceMatrix(global_fed_euc_dist, title="Federated Global Distance Matrix")
 plotDistanceMatrix(euclidean_distances(clustered_dataset), title="True Global Distance Matrix")
 plotDistanceMatrix(global_pred_euc_dist, title="Predicted Global Distance Matrix")
 
-print("Actual global distance matrix \n",euclidean_distances(clustered_dataset))
-print("Predicted global distance matrix \n",global_pred_euc_dist)
-print("The difference of the value in the matrices: \n", np.subtract(euclidean_distances(clustered_dataset), global_pred_euc_dist))
-
+# Pearson Correlation Coefficient between the matrics
+print("Pearson correlation between true and federated global matrices:", np.corrcoef(global_true_euc_dist.flatten(),global_fed_euc_dist.flatten())[0,1])
+print("Pearson correlation between true and predicted global matrices:", np.corrcoef(global_true_euc_dist.flatten(),global_pred_euc_dist.flatten())[0,1])
+print("Pearson correlation between federated and predicted global matrices:", np.corrcoef(global_fed_euc_dist.flatten(),global_pred_euc_dist.flatten())[0,1])
 # Plotting attempt of the matrices
 fig = plt.figure(figsize=(7,5))
 ax1 = fig.add_subplot(111)
