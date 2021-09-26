@@ -1,8 +1,10 @@
 import numpy as np
+from operator import itemgetter
 from sklearn.datasets import make_blobs
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.decomposition import PCA
 from sklearn.manifold import MDS
+from sklearn.cluster import KMeans
 from scipy.linalg import block_diag
 from sklearn.metrics.cluster import adjusted_rand_score, adjusted_mutual_info_score
 from sklearn.metrics import f1_score, silhouette_score, davies_bouldin_score
@@ -14,8 +16,23 @@ def generate_clustered_dataset(dimension,total_no_samples,no_of_cluster, random_
                                                           n_features=dimension, 
                                                           centers=no_of_cluster,
                                                           return_centers=True, 
-                                                          random_state=random_state) #check randomstate =80
+                                                          random_state=random_state)
     return clustered_dataset, true_label, centroids
+
+
+def optimal_no_of_cluster(euc_dist, range_n_clusters, threshold=0.95):
+    silhouette_avg_array = []
+    for n_clusters in range_n_clusters:
+        clusterer = KMeans(n_clusters=n_clusters, random_state=0)
+        cluster_labels = clusterer.fit_predict(euc_dist)
+        silhouette_avg = silhouette_score(euc_dist, cluster_labels)
+        silhouette_avg_array.append(silhouette_avg)
+        print("For n_clusters =", n_clusters,
+              "The average silhouette_score is :", silhouette_avg)
+        if silhouette_avg > threshold:
+            break
+    return range_n_clusters[silhouette_avg_array.index(max(silhouette_avg_array))]
+
 
 def perform_PCA(dimension, dataset):
     pca = PCA(n_components= dimension)
@@ -25,9 +42,22 @@ def perform_MDS(dimension, dataset):
     mds = MDS(n_components=dimension)
     return mds.fit_transform(dataset)
 
+def get_participant_shape(shape_array):
+    max_rows = max(shape_array,key=itemgetter(1))[0]
+    min_rows = min(shape_array,key=itemgetter(1))[0]
+    max_dim = max(shape_array,key=itemgetter(1))[1]
+    min_dim = min(shape_array,key=itemgetter(1))[1]
+    return max_rows, min_rows, max_dim, min_dim
+
+def get_uniform_SLDM(SLDMi, min_dim):
+    if SLDMi.shape[1] > min_dim:
+        return perform_PCA(min_dim, SLDMi)
+    else:
+        return SLDMi
+
 def calc_fed_euc_dist(sldm_array):
     combined_eucl = np.concatenate(sldm_array)
-    # rows are s1,s2..sn while columns are datapoints
+    # rows are datapoints while columns are S1,S2..Sn etc
     print(combined_eucl)
     # computing the distance of distance (e.g.: meta-distance)
     # number of all samples * number of all samples
