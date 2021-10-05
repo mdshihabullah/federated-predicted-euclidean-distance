@@ -104,7 +104,7 @@ def plotDistanceMatrix(distmat, title):
     ax.set_title(title)
     plt.show()
 
-def evaluation_scores(dist_matrix, dist_matrix_name, expected_label, actual_label, adj_rand=True, adj_mutual_info=True, f1=True, silhouette=False, davies_bouldin=True):
+def unsupervised_evaluation_scores(dist_matrix, dist_matrix_name, expected_label, actual_label, adj_rand=True, adj_mutual_info=True, f1=True, silhouette=False, davies_bouldin=True):
     print(f"Adjusted similarity score of the clustering with {dist_matrix_name} in (%) :", adjusted_rand_score(expected_label, actual_label)*100) if adj_rand == True else 0
     print(f"Adjusted mutual info score of the clustering with {dist_matrix_name} in (%) :", adjusted_mutual_info_score(expected_label, actual_label)*100) if adj_mutual_info == True else 0
     print(f"F1 score after clustering with {dist_matrix_name}:",f1_score(expected_label, actual_label, average='micro')) if f1 == True else 0

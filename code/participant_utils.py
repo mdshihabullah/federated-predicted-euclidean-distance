@@ -41,10 +41,33 @@ def regression_per_client(data, euc_dist_data_spike, regressor="Huber"):
         model = TheilSenRegressor().fit(local_fed_dist,euc_dist_data)
         return [model.coef_.item(),model.intercept_]
 
-def generate_spikes_each_participant(dataset, reduce= 1):
+def generate_spikes_each_participant(dataset, dimension_based=False, reduce= 1):
     dimension = dataset.shape[1]
-    row_size = np.floor((np.sqrt(dimension))/reduce).astype(int) if np.floor(np.sqrt(dimension)).astype(int) < np.floor(np.sqrt(dataset.shape[0])).astype(int) else np.floor((np.sqrt(dataset.shape[0]))/reduce).astype(int) 
-    generated_spikes = np.random.uniform(low=np.min(dataset, axis=0),
-                                         high=np.max(dataset, axis=0),
-                                         size=(row_size, dimension))
-    return generated_spikes
+    if dimension_based == False:
+        row_size = np.floor((np.sqrt(dimension))/reduce).astype(int) if np.floor(np.sqrt(dimension)).astype(int) < np.floor(np.sqrt(dataset.shape[0])).astype(int) else np.floor((np.sqrt(dataset.shape[0]))/reduce).astype(int) 
+        generated_spikes = np.random.uniform(low=np.min(dataset, axis=0),
+                                             high=np.max(dataset, axis=0),
+                                             size=(row_size, dimension))
+        return generated_spikes
+    else:
+        row_size = np.floor((np.sqrt(dimension))/reduce).astype(int)
+        generated_spikes = np.random.uniform(low=np.min(dataset, axis=0),
+                                             high=np.max(dataset, axis=0),
+                                             size=(row_size, dimension))
+        return generated_spikes
+
+
+# (3rd answer) https://stackoverflow.com/questions/23020659/fastest-way-to-calculate-the-centroid-of-a-set-of-coordinate-tuples-in-python-wi
+#For getting centroids as spikes when the label and clusters are known
+def get_centroid_per_label(arr):
+    length, dim = arr.shape
+    return np.array([np.sum(arr[:, i])/length for i in range(dim)])
+
+
+#For getting centroids as spikes when the label and clusters are known
+def get_spikes_from_centroid(df, col_name, unique_label):
+    spikes= []
+    for label in unique_label:
+        spikes.append(get_centroid_per_label(df.loc[df[col_name] == label].drop(columns="Gene_ID").to_numpy(dtype='float64')))
+    
+    return np.array(spikes)
