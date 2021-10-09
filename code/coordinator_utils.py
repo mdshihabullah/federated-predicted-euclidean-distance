@@ -29,7 +29,7 @@ def optimal_no_of_cluster(euc_dist, range_n_clusters, threshold=0.95):
         silhouette_avg_array.append(silhouette_avg)
         print("For n_clusters =", n_clusters,
               "The average silhouette_score is :", silhouette_avg)
-        if silhouette_avg > threshold:
+        if (silhouette_avg > threshold) or (n_clusters == np.ceil(len(range_n_clusters)/2 + 1).astype(int) and silhouette_avg < 0.2) :
             break
     return range_n_clusters[silhouette_avg_array.index(max(silhouette_avg_array))]
 
@@ -58,7 +58,6 @@ def get_uniform_SLDM(SLDMi, min_dim):
 def calc_fed_euc_dist(sldm_array):
     combined_eucl = np.concatenate(sldm_array)
     # rows are datapoints while columns are S1,S2..Sn etc
-    print(combined_eucl)
     # computing the distance of distance (e.g.: meta-distance)
     # number of all samples * number of all samples
     return euclidean_distances(combined_eucl)
@@ -67,28 +66,20 @@ def construct_global_Mx_Cx_matrix(MxCx,dataset_len_array):
     Mi,Ci = np.split(np.array(MxCx),2,axis=1)
     arrayMi=Mi.flatten()
     arrayCi=Ci.flatten()
-    print("arrayMi: ",arrayMi)
-    print("arrayCi: ",arrayCi)
     
     Mi_avg=np.average(arrayMi)
     Ci_avg=np.average(arrayCi)
-    print("Average of slopes: ", Mi_avg)
-    print("Average of constants: ", Ci_avg)
-    print("array of number of vectors in the datasets, i.e., shape array: \n",dataset_len_array)
     
     #Placing the respective Mi of each datapoints and getting Mx matrix
     global_Mx = block_diag(*[np.full((i, i), c) for c, i in zip(arrayMi, dataset_len_array)])
     #Placing the respective Ci of each datapoints and getting Cx matrix
     global_Cx = block_diag(*[np.full((i, i), c) for c, i in zip(arrayCi, dataset_len_array)])
-    print("Average of slope or coefficients i.e. Mi's: ", global_Mx)
-    print("Average of constants or intercepts i.e. Ci's: ", global_Cx)
+    
     # The zeroes in global slopes and constants matrix are replaced by Mi_avg and Ci_avg respectively 
     # They are used to calculate the predicted distance for cross-sectional data
     # For example: distance(a1,b5) where a1 and b5 belongs to different datasets
     global_Mx[global_Mx == 0] = Mi_avg
     global_Cx[global_Cx == 0] = Ci_avg
-    print("Global coefficient or slope matrix: \n", global_Mx)
-    print("Global constant or intercept matrix: \n", global_Cx)
     return global_Mx, global_Cx
 
 def calc_pred_dist_matrix(global_Mx, global_fed_euc_dist, global_Cx):
@@ -102,7 +93,7 @@ def plotDistanceMatrix(distmat, title):
     ax = plt.axes()
     sns.heatmap(distmat, ax = ax)
     ax.set_title(title)
-    plt.show()
+    plt.savefig(title)
 
 def unsupervised_evaluation_scores(dist_matrix, dist_matrix_name, expected_label, actual_label, adj_rand=True, adj_mutual_info=True, f1=True, silhouette=False, davies_bouldin=True):
     print(f"Adjusted similarity score of the clustering with {dist_matrix_name} in (%) :", adjusted_rand_score(expected_label, actual_label)*100) if adj_rand == True else 0

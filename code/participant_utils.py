@@ -41,22 +41,63 @@ def regression_per_client(data, euc_dist_data_spike, regressor="Huber"):
         model = TheilSenRegressor().fit(local_fed_dist,euc_dist_data)
         return [model.coef_.item(),model.intercept_]
 
-def generate_spikes_each_participant(dataset, dimension_based=False, reduce= 1):
+# def generate_spikes_each_participant(dataset, dimension_based=False, reduce= 1, induce= 1):
+#     dimension = dataset.shape[1]
+#     if dimension_based == False:
+#         no_of_spikes = np.floor((np.sqrt(dimension))/reduce).astype(int) if np.floor(np.sqrt(dimension)).astype(int) < np.floor(np.sqrt(dataset.shape[0])).astype(int) else np.floor((np.sqrt(dataset.shape[0]))/reduce).astype(int) 
+#         generated_spikes = np.random.uniform(low=np.min(dataset, axis=0),
+#                                              high=np.max(dataset, axis=0),
+#                                              size=(no_of_spikes*induce, dimension))
+#         return generated_spikes
+#     else:
+#         no_of_spikes = np.floor((np.sqrt(dimension))/reduce).astype(int)
+#         generated_spikes = np.random.uniform(low=np.min(dataset, axis=0),
+#                                              high=np.max(dataset, axis=0),
+#                                              size=(no_of_spikes*induce, dimension))
+#         return generated_spikes
+
+
+def perform_PCA(dimension, dataset):
+    pca = PCA(n_components= dimension)
+    return pca, pca.fit_transform(dataset)
+
+def perform_PCA_inverse(pca, dataset_pca):
+    return pca.inverse_transform(dataset_pca)
+
+def generate_spikes_each_participant(dataset, dimension_based=False, reduce= 1, induce= 1):
     dimension = dataset.shape[1]
+    dimension_pca = dataset.shape[0] if dataset.shape[0] < dataset.shape[1] else dataset.shape[1]
+    pca, dataset_pca = perform_PCA(dimension_pca, dataset)
+    low_pca = np.min(dataset_pca, axis=0)
+    high_pca = np.max(dataset_pca, axis=0)
+    
+    low1 = perform_PCA_inverse(pca, low_pca)
+    high1 = perform_PCA_inverse(pca, high_pca)
     if dimension_based == False:
-        row_size = np.floor((np.sqrt(dimension))/reduce).astype(int) if np.floor(np.sqrt(dimension)).astype(int) < np.floor(np.sqrt(dataset.shape[0])).astype(int) else np.floor((np.sqrt(dataset.shape[0]))/reduce).astype(int) 
-        generated_spikes = np.random.uniform(low=np.min(dataset, axis=0),
-                                             high=np.max(dataset, axis=0),
-                                             size=(row_size, dimension))
+        no_of_spikes = np.floor(((np.sqrt(dimension))*induce)/reduce).astype(int) if np.floor(np.sqrt(dimension)).astype(int) < np.floor(np.sqrt(dataset.shape[0])).astype(int) else np.floor((np.sqrt(dataset.shape[0])*induce)/reduce).astype(int)
+        divlen = np.subtract(high1,low1)/no_of_spikes
+        evenspikes = []
+        for i in range(0,no_of_spikes):
+            divspikearray = np.random.uniform(low=np.add(low1,i*divlen),
+                                             high=np.add(low1,(i+1)*divlen),
+                                             size=dimension)
+            evenspikes.append(divspikearray)
+
+        generated_spikes = np.array(evenspikes)
         return generated_spikes
     else:
-        row_size = np.floor((np.sqrt(dimension))/reduce).astype(int)
-        generated_spikes = np.random.uniform(low=np.min(dataset, axis=0),
-                                             high=np.max(dataset, axis=0),
-                                             size=(row_size, dimension))
+        no_of_spikes = np.floor((np.sqrt(dimension))/reduce).astype(int)
+        divlen = (np.subtract(high1, low1)) / no_of_spikes
+        evenspikes = []
+        for i in range(0, no_of_spikes):
+            divspikearray = np.random.uniform(low=low1 + (i * divlen),
+                                              high = low1 + ((i + 1) * divlen),
+                                              size = (1, dimension))
+            evenspikes.append(divspikearray)
+
+        generated_spikes = np.array(evenspikes)
         return generated_spikes
-
-
+        
 # (3rd answer) https://stackoverflow.com/questions/23020659/fastest-way-to-calculate-the-centroid-of-a-set-of-coordinate-tuples-in-python-wi
 #For getting centroids as spikes when the label and clusters are known
 def get_centroid_per_label(arr):
@@ -68,6 +109,6 @@ def get_centroid_per_label(arr):
 def get_spikes_from_centroid(df, col_name, unique_label):
     spikes= []
     for label in unique_label:
-        spikes.append(get_centroid_per_label(df.loc[df[col_name] == label].drop(columns="Gene_ID").to_numpy(dtype='float64')))
+        spikes.append(get_centroid_per_label(df.loc[df[col_name] == label].drop(columns=col_name).to_numpy(dtype='float64')))
     
     return np.array(spikes)
