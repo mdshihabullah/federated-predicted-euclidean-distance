@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.linear_model import LinearRegression, HuberRegressor, TheilSenRegressor
+from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 
 def plot3dwithspike(width, height, title, datapoints, spikes, myLabel=None) :
@@ -71,15 +72,15 @@ def generate_spikes_each_participant(dataset, dimension_based=False, reduce= 1, 
     low_pca = np.min(dataset_pca, axis=0)
     high_pca = np.max(dataset_pca, axis=0)
     
-    low1 = perform_PCA_inverse(pca, low_pca)
-    high1 = perform_PCA_inverse(pca, high_pca)
+    low_inverse = perform_PCA_inverse(pca, low_pca)
+    high_inverse = perform_PCA_inverse(pca, high_pca)
     if dimension_based == False:
         no_of_spikes = np.floor(((np.sqrt(dimension))*induce)/reduce).astype(int) if np.floor(np.sqrt(dimension)).astype(int) < np.floor(np.sqrt(dataset.shape[0])).astype(int) else np.floor((np.sqrt(dataset.shape[0])*induce)/reduce).astype(int)
-        divlen = np.subtract(high1,low1)/no_of_spikes
+        divlen = np.subtract(high_inverse,low_inverse)/no_of_spikes
         evenspikes = []
         for i in range(0,no_of_spikes):
-            divspikearray = np.random.uniform(low=np.add(low1,i*divlen),
-                                             high=np.add(low1,(i+1)*divlen),
+            divspikearray = np.random.uniform(low=np.add(low_inverse,i*divlen),
+                                             high=np.add(low_inverse,(i+1)*divlen),
                                              size=dimension)
             evenspikes.append(divspikearray)
 
@@ -87,17 +88,37 @@ def generate_spikes_each_participant(dataset, dimension_based=False, reduce= 1, 
         return generated_spikes
     else:
         no_of_spikes = np.floor((np.sqrt(dimension))/reduce).astype(int)
-        divlen = (np.subtract(high1, low1)) / no_of_spikes
+        divlen = (np.subtract(high_inverse, low_inverse)) / no_of_spikes
         evenspikes = []
         for i in range(0, no_of_spikes):
-            divspikearray = np.random.uniform(low=low1 + (i * divlen),
-                                              high = low1 + ((i + 1) * divlen),
+            divspikearray = np.random.uniform(low=low_inverse + (i * divlen),
+                                              high = low_inverse + ((i + 1) * divlen),
                                               size = (1, dimension))
             evenspikes.append(divspikearray)
 
         generated_spikes = np.array(evenspikes)
         return generated_spikes
-        
+
+def generate_spikes_with_centroids(dataset, centroids, reduce= 1, induce= 2):
+    dimension = dataset.shape[1]
+    dimension_pca = dataset.shape[0] if dataset.shape[0] < dataset.shape[1] else dataset.shape[1]
+    pca, dataset_pca = perform_PCA(dimension_pca, dataset)
+    low_pca = np.min(dataset_pca, axis=0)
+    high_pca = np.max(dataset_pca, axis=0)    
+    low_inverse = perform_PCA_inverse(pca, low_pca)
+    high_inverse = perform_PCA_inverse(pca, high_pca)
+    no_of_spikes = abs(np.floor(((np.sqrt(dimension))*induce)/reduce).astype(int) + centroids.shape[0]) if np.floor(np.sqrt(dimension)).astype(int) < np.floor(np.sqrt(dataset.shape[0])).astype(int) else abs(np.floor((np.sqrt(dataset.shape[0])*induce)/reduce).astype(int) + centroids.shape[0])
+    # divlen = np.subtract(high_inverse,low_inverse)/(no_of_spikes if no_of_spikes > 0 else np.ceil(centroids.shape[0]/2).astype(int))
+    divlen = np.subtract(high_inverse,low_inverse)/no_of_spikes
+    evenspikes = []
+    for i in range(0,no_of_spikes):
+        divspikearray = np.random.uniform(low=np.add(low_inverse,i*divlen),
+                                          high=np.add(low_inverse,(i+1)*divlen),
+                                          size=dimension)
+        evenspikes.append(divspikearray)
+
+    generated_spikes = np.concatenate((np.array(evenspikes), centroids))
+    return generated_spikes
 # (3rd answer) https://stackoverflow.com/questions/23020659/fastest-way-to-calculate-the-centroid-of-a-set-of-coordinate-tuples-in-python-wi
 #For getting centroids as spikes when the label and clusters are known
 def get_centroid_per_label(arr):

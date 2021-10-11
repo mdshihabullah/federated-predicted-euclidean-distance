@@ -65,51 +65,51 @@ slope_intercept_D2 = pu.regression_per_client(data= D2,
 global_true_euc_dist = euclidean_distances(clustered_dataset)
 
 # Transform the dataset and spike points into 2D and 3D for visualization purpose
-clustered_dataset_2d = cu.perform_PCA(2, clustered_dataset)
-clustered_dataset_3d = cu.perform_PCA(3, clustered_dataset)
-generated_spikes_2d = cu.perform_PCA(2, generated_spikes)
-generated_spikes_3d = cu.perform_PCA(3, generated_spikes)
+# clustered_dataset_2d = cu.perform_PCA(2, clustered_dataset)
+# clustered_dataset_3d = cu.perform_PCA(3, clustered_dataset)
+# generated_spikes_2d = cu.perform_PCA(2, generated_spikes)
+# generated_spikes_3d = cu.perform_PCA(3, generated_spikes)
 
 # https://stackoverflow.com/questions/59765712/optics-parallelism
-label = OPTICS(metric='precomputed', n_jobs=-1).fit_predict(global_true_euc_dist)
+# label = OPTICS(metric='precomputed', n_jobs=-1).fit_predict(global_true_euc_dist)
 
-#Getting unique labels
-u_labels_2 = np.unique(label)
-pred_label_gtdm =  np.array(label).tolist()
+# #Getting unique labels
+# u_labels_2 = np.unique(label)
+# pred_label_gtdm =  np.array(label).tolist()
 
-plt.figure(figsize=(15,15))
-plt.subplots_adjust(bottom=.05, top=.9, left=.05, right=.95)
-plt.subplot(325)
-plt.title("Clustering with true distance matrix", fontsize='medium')
-for i in u_labels_2:
-    plt.scatter(clustered_dataset_2d[label == i , 0] , clustered_dataset_2d[label == i , 1] , label = i)
-plt.scatter(generated_spikes_2d[:,0] , generated_spikes_2d[:,1] , s = 80, color = 'k')
-plt.legend()
-plt.savefig("GSE84426_OPTICS_GTDM_2d.png")
-pu.plot3dwithspike(width=9, height=6, title= "Clustering with true aggregated distance matrix", datapoints = clustered_dataset_3d, spikes=generated_spikes_3d, myLabel=pred_label_gtdm)
+# plt.figure(figsize=(15,15))
+# plt.subplots_adjust(bottom=.05, top=.9, left=.05, right=.95)
+# plt.subplot(325)
+# plt.title("Clustering with true distance matrix", fontsize='medium')
+# for i in u_labels_2:
+#     plt.scatter(clustered_dataset_2d[label == i , 0] , clustered_dataset_2d[label == i , 1] , label = i)
+# plt.scatter(generated_spikes_2d[:,0] , generated_spikes_2d[:,1] , s = 80, color = 'k')
+# plt.legend()
+# plt.savefig("GSE84426_OPTICS_GTDM_2d.png")
+# pu.plot3dwithspike(width=9, height=6, title= "Clustering with true aggregated distance matrix", datapoints = clustered_dataset_3d, spikes=generated_spikes_3d, myLabel=pred_label_gtdm)
 
-cu.unsupervised_evaluation_scores(global_true_euc_dist, "Aggregated True Distance Matrix",  true_label, pred_label_gtdm, adj_rand=True, adj_mutual_info=True, f1=True, silhouette=False, davies_bouldin=True)
+# cu.unsupervised_evaluation_scores(global_true_euc_dist, "Aggregated True Distance Matrix",  true_label, pred_label_gtdm, adj_rand=True, adj_mutual_info=True, f1=True, silhouette=False, davies_bouldin=True)
 
 
 global_fed_euc_dist = cu.calc_fed_euc_dist([euc_dist_D1_spikes, euc_dist_D2_spikes])
 
-label = OPTICS(metric='precomputed', n_jobs=-1).fit_predict(global_fed_euc_dist)
-#Getting unique labels
-u_labels_2 = np.unique(label)
-pred_label_gfdm =  np.array(label).tolist()
+# label = OPTICS(metric='precomputed', n_jobs=-1).fit_predict(global_fed_euc_dist)
+# #Getting unique labels
+# u_labels_2 = np.unique(label)
+# pred_label_gfdm =  np.array(label).tolist()
 
-plt.figure(figsize=(15,15))
-plt.subplots_adjust(bottom=.05, top=.9, left=.05, right=.95)
-plt.subplot(325)
-plt.title("Clustering with globally federated distance matrix", fontsize='medium')
-for i in u_labels_2:
-    plt.scatter(clustered_dataset_2d[label == i , 0] , clustered_dataset_2d[label == i , 1] , label = i)
-plt.scatter(generated_spikes_2d[:,0] , generated_spikes_2d[:,1] , s = 80, color = 'k')
-plt.legend()
-plt.savefig("GSE84426_OPTICS_GFDM_2d.png")
-pu.plot3dwithspike(width=9, height=6, title= "Clustering with globally federated distance matrix", datapoints = clustered_dataset_3d, spikes=generated_spikes_3d, myLabel=pred_label_gfdm)
+# plt.figure(figsize=(15,15))
+# plt.subplots_adjust(bottom=.05, top=.9, left=.05, right=.95)
+# plt.subplot(325)
+# plt.title("Clustering with globally federated distance matrix", fontsize='medium')
+# for i in u_labels_2:
+#     plt.scatter(clustered_dataset_2d[label == i , 0] , clustered_dataset_2d[label == i , 1] , label = i)
+# plt.scatter(generated_spikes_2d[:,0] , generated_spikes_2d[:,1] , s = 80, color = 'k')
+# plt.legend()
+# plt.savefig("GSE84426_OPTICS_GFDM_2d.png")
+# pu.plot3dwithspike(width=9, height=6, title= "Clustering with globally federated distance matrix", datapoints = clustered_dataset_3d, spikes=generated_spikes_3d, myLabel=pred_label_gfdm)
 
-cu.unsupervised_evaluation_scores(global_fed_euc_dist, "Global Federated Distance Matrix",  pred_label_gtdm, pred_label_gfdm, adj_rand=True, adj_mutual_info=True, f1=True, silhouette=False, davies_bouldin=True)
+# cu.unsupervised_evaluation_scores(global_fed_euc_dist, "Global Federated Distance Matrix",  pred_label_gtdm, pred_label_gfdm, adj_rand=True, adj_mutual_info=True, f1=True, silhouette=False, davies_bouldin=True)
 
 
 MxCx = []
@@ -119,23 +119,23 @@ MxCx.append(slope_intercept_D2)
 global_Mx, global_Cx = cu.construct_global_Mx_Cx_matrix(MxCx,[euc_dist_D1_spikes.shape[0], euc_dist_D2_spikes.shape[0]])
 global_pred_euc_dist = cu.calc_pred_dist_matrix(global_Mx, global_fed_euc_dist, global_Cx)
 
-label = OPTICS(metric='precomputed', n_jobs=-1).fit_predict(global_pred_euc_dist)
-#Getting unique labels
-u_labels_2 = np.unique(label)
-pred_label_2 =  np.array(label).tolist()
+# label = OPTICS(metric='precomputed', n_jobs=-1).fit_predict(global_pred_euc_dist)
+# #Getting unique labels
+# u_labels_2 = np.unique(label)
+# pred_label_2 =  np.array(label).tolist()
 
-plt.figure(figsize=(15,15))
-plt.subplots_adjust(bottom=.05, top=.9, left=.05, right=.95)
-plt.subplot(325)
-plt.title("Clustering with predicted distance matrix", fontsize='medium')
-for i in u_labels_2:
-    plt.scatter(clustered_dataset_2d[label == i , 0] , clustered_dataset_2d[label == i , 1] , label = i)
-plt.scatter(generated_spikes_2d[:,0] , generated_spikes_2d[:,1] , s = 80, color = 'k')
-plt.legend()
-plt.savefig("GSE84426_OPTICS_GPDM_2d.png")
-pu.plot3dwithspike(width=9, height=6, title= "Clustering with globally predicted distance matrix", datapoints = clustered_dataset_3d, spikes=generated_spikes_3d, myLabel=pred_label_2)
+# plt.figure(figsize=(15,15))
+# plt.subplots_adjust(bottom=.05, top=.9, left=.05, right=.95)
+# plt.subplot(325)
+# plt.title("Clustering with predicted distance matrix", fontsize='medium')
+# for i in u_labels_2:
+#     plt.scatter(clustered_dataset_2d[label == i , 0] , clustered_dataset_2d[label == i , 1] , label = i)
+# plt.scatter(generated_spikes_2d[:,0] , generated_spikes_2d[:,1] , s = 80, color = 'k')
+# plt.legend()
+# plt.savefig("GSE84426_OPTICS_GPDM_2d.png")
+# pu.plot3dwithspike(width=9, height=6, title= "Clustering with globally predicted distance matrix", datapoints = clustered_dataset_3d, spikes=generated_spikes_3d, myLabel=pred_label_2)
 
-cu.unsupervised_evaluation_scores(global_pred_euc_dist, "Global Predicted Distance Matrix",  pred_label_gtdm, pred_label_2, adj_rand=True, adj_mutual_info=True, f1=True, silhouette=False, davies_bouldin=True)
+# cu.unsupervised_evaluation_scores(global_pred_euc_dist, "Global Predicted Distance Matrix",  pred_label_gtdm, pred_label_2, adj_rand=True, adj_mutual_info=True, f1=True, silhouette=False, davies_bouldin=True)
 
 cu.plotDistanceMatrix(global_fed_euc_dist, title="Federated Global Distance Matrix")
 cu.plotDistanceMatrix(global_true_euc_dist, title="True Global Distance Matrix")

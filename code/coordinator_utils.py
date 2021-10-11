@@ -10,6 +10,7 @@ from sklearn.metrics.cluster import adjusted_rand_score, adjusted_mutual_info_sc
 from sklearn.metrics import f1_score, silhouette_score, davies_bouldin_score
 import matplotlib.pyplot as plt
 import seaborn as sns
+from scipy.stats import spearmanr
 
 def generate_clustered_dataset(dimension,total_no_samples,no_of_cluster, random_state):
     clustered_dataset, true_label, centroids = make_blobs(n_samples=total_no_samples,
@@ -106,4 +107,9 @@ def pearson_corr_coeff(global_true_euc_dist, global_fed_euc_dist, global_pred_eu
     print("Pearson correlation between true and predicted global matrices:", np.corrcoef(global_true_euc_dist.flatten(),global_pred_euc_dist.flatten())[0,1])
     print("Pearson correlation between true and federated global matrices:", np.corrcoef(global_true_euc_dist.flatten(),global_fed_euc_dist.flatten())[0,1])
     print("Pearson correlation between federated and predicted global matrices:", np.corrcoef(global_fed_euc_dist.flatten(),global_pred_euc_dist.flatten())[0,1])
+
+def spearman_corr_coeff(global_true_euc_dist, global_fed_euc_dist, global_pred_euc_dist):
+    print("Spearman correlation between true and predicted global matrices:", spearmanr(global_true_euc_dist.flatten(),global_pred_euc_dist.flatten())[0])
+    print("Spearman correlation between true and federated global matrices:", spearmanr(global_true_euc_dist.flatten(),global_fed_euc_dist.flatten())[0])
+    print("Spearman correlation between federated and predicted global matrices:", spearmanr(global_fed_euc_dist.flatten(),global_pred_euc_dist.flatten())[0])
 
