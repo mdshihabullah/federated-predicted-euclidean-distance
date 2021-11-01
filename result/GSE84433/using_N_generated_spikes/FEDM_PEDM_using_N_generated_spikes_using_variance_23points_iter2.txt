@@ -1,0 +1,7 @@
+Shape of Generated Spikes (46, 48708)
+Pearson correlation between true and predicted global matrices: 0.8077218951613165
+Pearson correlation between true and federated global matrices: 0.8196622614003835
+Pearson correlation between federated and predicted global matrices: 0.9807759674654565
+Spearman correlation between true and predicted global matrices: 0.7892664112750545
+Spearman correlation between true and federated global matrices: 0.8019274183043931
+Spearman correlation between federated and predicted global matrices: 0.9825553895784533

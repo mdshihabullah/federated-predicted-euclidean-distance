@@ -7,7 +7,7 @@ import participant_utils as pu
 import coordinator_utils as cu
 
 # Read the dataset accordingly
-path = Path(__file__).parent / "../dataset/GSE84426_series_matrix.txt"
+path = Path(__file__).parent / "../dataset/GSE84433_series_matrix.txt"
 clustered_dataset = pd.read_csv(path, comment='!', sep="\t", header=0)
 clustered_dataset = clustered_dataset.T
 clustered_dataset.dropna(inplace=True)
@@ -34,14 +34,14 @@ D2=np.concatenate((D2,D3,D4))
 
 # Each participant generates random spike in points 
 # which in production environment will be shared to coordinator for creating overall spike array
-generated_spikes_D1 = pu.generate_spikes_each_participant(D1, induce=2)
-generated_spikes_D2 = pu.generate_spikes_each_participant(D2, induce=2)
+generated_spikes_D1 = pu.generate_spikes_using_PCA(D1, induce=4)
+generated_spikes_D2 = pu.generate_spikes_using_PCA(D2, induce=4)
 
 #### Coordinator Based Computation ####
 generated_spikes = np.concatenate((generated_spikes_D1, generated_spikes_D2))
 print("Shape of Generated Spikes",generated_spikes.shape)
 
-# pu.plot3dwithspike(width=9, height=6, title= "Dataset with spike points", datapoints = clustered_dataset, spikes=generated_spikes, myLabel=true_label)
+pu.plot3dwithspike(width=9, height=6, title= "Dataset with spike points", datapoints = clustered_dataset, spikes=generated_spikes, myLabel=true_label)
 # # rows are s1,s2..sn while columns are datapoints
 euc_dist_D1_spikes = euclidean_distances(D1,generated_spikes)
 # print("Spike local distance matrix of 1st participant: \n", euc_dist_D1_spikes)

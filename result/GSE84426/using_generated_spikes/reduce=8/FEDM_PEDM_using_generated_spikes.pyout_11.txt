@@ -1,0 +1,11 @@
+Shape of Generated Spikes (0, 48708)
+Traceback (most recent call last):
+  File "FEDM_PEDM_using_generated_spikes.py", line 46, in <module>
+    euc_dist_D1_spikes = euclidean_distances(D1,generated_spikes)
+  File "/home/shihab/.local/lib/python3.8/site-packages/sklearn/metrics/pairwise.py", line 299, in euclidean_distances
+    X, Y = check_pairwise_arrays(X, Y)
+  File "/home/shihab/.local/lib/python3.8/site-packages/sklearn/metrics/pairwise.py", line 164, in check_pairwise_arrays
+    Y = check_array(
+  File "/home/shihab/.local/lib/python3.8/site-packages/sklearn/utils/validation.py", line 797, in check_array
+    raise ValueError(
+ValueError: Found array with 0 sample(s) (shape=(0, 48708)) while a minimum of 1 is required by check_pairwise_arrays.

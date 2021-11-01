@@ -9,17 +9,11 @@ from sklearn.cluster import AffinityPropagation
 
 
 # Read the dataset accordingly
-path = Path(__file__).parent / "../dataset/GSE84426_series_matrix.txt"
+path = Path(__file__).parent / "../dataset/GSE84433_series_matrix.txt"
 clustered_dataset = pd.read_csv(path, comment='!', sep="\t", header=0)
 clustered_dataset = clustered_dataset.T
 clustered_dataset.dropna(inplace=True)
 clustered_dataset, clustered_dataset.columns = clustered_dataset[1:] , clustered_dataset.iloc[0]
-
-#Without using sklearn's LabelEncoder()
-# true_label = clustered_dataset.iloc[:,0].astype('category').cat.codes
-
-label_encoder = LabelEncoder()
-true_label = label_encoder.fit_transform(clustered_dataset.iloc[:,0])
 
 # Convert the dataset into numpy ndarray for further computation
 clustered_dataset = clustered_dataset.to_numpy(dtype='float64')
@@ -44,7 +38,7 @@ generated_spikes = np.concatenate((generated_spikes_D1, generated_spikes_D2))
 print("Shape of Generated Spikes",generated_spikes.shape)
 clustered_dataset_3d = cu.perform_PCA(3, clustered_dataset)
 generated_spikes_3d = cu.perform_PCA(3, generated_spikes)
-pu.plot3dwithspike(width=9, height=6, title= "Dataset with spike points", datapoints = clustered_dataset_3d, spikes=generated_spikes_3d, myLabel=true_label)
+pu.plot3dwithspike(width=9, height=6, title= "Dataset with spike points", datapoints = clustered_dataset_3d, spikes=generated_spikes_3d, myLabel=None)
 # # rows are s1,s2..sn while columns are datapoints
 euc_dist_D1_spikes = euclidean_distances(D1,generated_spikes)
 # print("Spike local distance matrix of 1st participant: \n", euc_dist_D1_spikes)
@@ -58,7 +52,7 @@ slope_intercept_D1 = pu.regression_per_client(data= D1,
                                            regressor="Linear")
 slope_intercept_D2 = pu.regression_per_client(data= D2,
                                            euc_dist_data_spike= euc_dist_D2_spikes,
-                                           regressor="Huber")
+                                           regressor="Linear")
 
 global_true_euc_dist = euclidean_distances(clustered_dataset)
 
