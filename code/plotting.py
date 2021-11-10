@@ -27,9 +27,9 @@ boxplot_GSE84433_N_generated_spikes_and_centroids_results = pd.read_csv(boxplot_
 lineplot_file_path = Path(__file__).parent / "../result/GSE84426_lineplot_results.csv"
 lineplot_results = pd.read_csv(lineplot_file_path)
 
-g = sns.FacetGrid(data=artificial_non_uniform_results, col="dataset")
+g = sns.FacetGrid(data=artificial_uniform_results, col="dataset")
 g.map_dataframe(sns.pointplot, 
-      "no_of_spikes", "spearman_ADM_PEDM",
+      "no_of_spikes", "pearson_ADM_FEDM",
       hue="method", palette='deep')
 g.add_legend()
 
@@ -38,7 +38,7 @@ g.add_legend()
 #              r'$\mathit{r}$ (ADM, PEDM)'
 #              r'$\rho$ (ADM, PEDM)'
 g.set_xlabels("Number of spike points", labelpad=20)
-g.set_ylabels(r'$\rho$ (ADM, PEDM)', labelpad=20)
+g.set_ylabels(r'$\mathit{r}$ (ADM, FEDM)', labelpad=20)
 plt.show()
 
 # sns.catplot(x='no_of_spikes', y='pearson_ADM_PEDM', hue='method', data=artificial_non_uniform_results, kind='point', col='dataset')

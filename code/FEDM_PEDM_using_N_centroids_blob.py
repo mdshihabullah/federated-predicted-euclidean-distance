@@ -1,18 +1,20 @@
 import random
 import sys
 import numpy as np
+import pandas as pd
 from sklearn.datasets import make_blobs
 from sklearn.metrics.pairwise import euclidean_distances
 import participant_utils as pu
 import coordinator_utils as cu
 from sklearn.cluster import KMeans
-
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # Declare for experimental purpose
 total_no_samples=5000
 D1_sample_size = random.randint(1, total_no_samples)
 D2_sample_size = total_no_samples - D1_sample_size
-dimension=20000
+dimension=10000
 # Create the dataset accordingly
 # D1, true_label_D1, spikes_D1 = make_blobs(n_samples=D1_sample_size,
 #                                           n_features=dimension, 
@@ -69,3 +71,16 @@ global_pred_euc_dist = cu.calc_pred_dist_matrix(global_Mx, global_fed_euc_dist, 
 
 cu.pearson_corr_coeff(global_true_euc_dist, global_fed_euc_dist, global_pred_euc_dist)
 cu.spearman_corr_coeff(global_true_euc_dist, global_fed_euc_dist, global_pred_euc_dist)
+
+
+adm_fedm = pd.DataFrame([global_true_euc_dist.flatten(), global_fed_euc_dist.flatten()], index=["Aggregated Distance Matrix", "Federated Distance Matrix"]).T.explode("Federated Distance Matrix")
+ax = sns.scatterplot(data=adm_fedm,x='Aggregated Distance Matrix',y='Federated Distance Matrix')
+
+ax.set_title(f"For, sample= {total_no_samples} and dimension= {dimension}", fontsize=15, fontweight='bold', pad=20)
+plt.savefig('artificial_uniform_sample_5000_dim_10000_ADM_FEDM_scatterplot')
+
+adm_pedm = pd.DataFrame([global_true_euc_dist.flatten(), global_pred_euc_dist.flatten()], index=["Aggregated Distance Matrix", "Predicted Distance Matrix"]).T.explode("Predicted Distance Matrix")
+ax = sns.scatterplot(data=adm_pedm,x='Aggregated Distance Matrix',y='Predicted Distance Matrix')
+
+ax.set_title(f"For, sample= {total_no_samples} and dimension= {dimension}", fontsize=15, fontweight='bold', pad=20)
+plt.savefig('artificial_uniform_sample_5000_dim_10000_ADM_PEDM_scatterplot')

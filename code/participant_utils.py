@@ -42,21 +42,6 @@ def regression_per_client(data, euc_dist_data_spike, regressor="Huber"):
         model = TheilSenRegressor().fit(local_fed_dist,euc_dist_data)
         return [model.coef_.item(),model.intercept_]
 
-# def generate_spikes_each_participant(dataset, dimension_based=False, reduce= 1, induce= 1):
-#     dimension = dataset.shape[1]
-#     if dimension_based == False:
-#         no_of_spikes = np.floor((np.sqrt(dimension))/reduce).astype(int) if np.floor(np.sqrt(dimension)).astype(int) < np.floor(np.sqrt(dataset.shape[0])).astype(int) else np.floor((np.sqrt(dataset.shape[0]))/reduce).astype(int) 
-#         generated_spikes = np.random.uniform(low=np.min(dataset, axis=0),
-#                                              high=np.max(dataset, axis=0),
-#                                              size=(no_of_spikes*induce, dimension))
-#         return generated_spikes
-#     else:
-#         no_of_spikes = np.floor((np.sqrt(dimension))/reduce).astype(int)
-#         generated_spikes = np.random.uniform(low=np.min(dataset, axis=0),
-#                                              high=np.max(dataset, axis=0),
-#                                              size=(no_of_spikes*induce, dimension))
-#         return generated_spikes
-
 def perform_PCA(dimension, dataset):
     pca = PCA(n_components= dimension)
     return pca, pca.fit_transform(dataset)
