@@ -24,22 +24,22 @@ boxplot_GSE84433_N_generated_spikes_and_centroids_file_path = Path(__file__).par
 boxplot_GSE84433_N_generated_spikes_and_centroids_results = pd.read_csv(boxplot_GSE84433_N_generated_spikes_and_centroids_file_path)
 
 
-lineplot_file_path = Path(__file__).parent / "../result/GSE84426_lineplot_results.csv"
+lineplot_file_path = Path(__file__).parent / "../result/GSE84433_lineplot_results_new.csv"
 lineplot_results = pd.read_csv(lineplot_file_path)
 
-g = sns.FacetGrid(data=artificial_uniform_results, col="dataset")
-g.map_dataframe(sns.pointplot, 
-      "no_of_spikes", "pearson_ADM_FEDM",
-      hue="method", palette='deep')
-g.add_legend()
+# g = sns.FacetGrid(data=artificial_uniform_results, col="dataset")
+# g.map_dataframe(sns.pointplot, 
+#       "no_of_spikes", "pearson_ADM_FEDM",
+#       hue="method", palette='deep')
+# g.add_legend()
 
-#             x_label="Number of spike points", 
-#             y_label="Correlation Coefficient"
-#              r'$\mathit{r}$ (ADM, PEDM)'
-#              r'$\rho$ (ADM, PEDM)'
-g.set_xlabels("Number of spike points", labelpad=20)
-g.set_ylabels(r'$\mathit{r}$ (ADM, FEDM)', labelpad=20)
-plt.show()
+# #             x_label="Number of spike points", 
+# #             y_label="Correlation Coefficient"
+# #              r'$\mathit{r}$ (ADM, PEDM)'
+# #              r'$\rho$ (ADM, PEDM)'
+# g.set_xlabels("Number of spike points", labelpad=20)
+# g.set_ylabels(r'$\mathit{r}$ (ADM, FEDM)', labelpad=20)
+# plt.show()
 
 # sns.catplot(x='no_of_spikes', y='pearson_ADM_PEDM', hue='method', data=artificial_non_uniform_results, kind='point', col='dataset')
 # plt.show()
@@ -77,13 +77,13 @@ def showLinePlot(x_values,y_values,hue_values,data,title,x_label,y_label):
     plt.show()
 
 
-# showLinePlot(x_values="no_of_spikes",
-#             y_values="correlation_values",
-#             hue_values="correlation_entities",
-#             data=lineplot_results,
-#             title= "Overall Pearson and Spearman Correlation Coefficient",
-#             x_label="Number of spike points", 
-#             y_label="Correlation Coefficient")
+showLinePlot(x_values="no_of_spikes",
+            y_values="correlation_values",
+            hue_values="correlation_entities",
+            data=lineplot_results,
+            title= "GSE84433",
+            x_label="Number of spike points", 
+            y_label="Correlation Coefficient")
 
 # showPointPlot(x_values="no_of_spikes",
 #             y_values="pearson_ADM_PEDM",

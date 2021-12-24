@@ -5,7 +5,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics.pairwise import euclidean_distances
 import participant_utils as pu
 import coordinator_utils as cu
-from sklearn_extra.cluster import KMedoids
+from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 
 # Read the dataset accordingly
@@ -37,8 +37,8 @@ D2=np.concatenate((D2,D3,D4))
 
 # Each participant generates random spike in points 
 # which in production environment will be shared to coordinator for creating overall spike array
-generated_spikes_D1 = pu.generate_spikes_using_PCA_and_variance(D1, induce=4)
-generated_spikes_D2 = pu.generate_spikes_using_PCA_and_variance(D1, induce=4)
+generated_spikes_D1 = pu.generate_spikes_using_PCA_and_variance(D1, induce=3)
+generated_spikes_D2 = pu.generate_spikes_using_PCA_and_variance(D1, induce=3)
 
 #### Coordinator Based Computation ####
 generated_spikes = np.concatenate((generated_spikes_D1, generated_spikes_D2))
@@ -87,7 +87,8 @@ generated_spikes_2d = cu.perform_PCA(2, generated_spikes)
 # plt.show()
 
 # https://stackoverflow.com/questions/59765712/optics-parallelism
-label = KMedoids(n_clusters=14, metric='precomputed',method='pam').fit_predict(global_true_euc_dist)
+# label = KMedoids(n_clusters=14, metric='precomputed',method='pam').fit_predict(global_true_euc_dist)
+label = KMeans(n_clusters=14).fit_predict(global_true_euc_dist)
 
 #Getting unique labels
 u_labels_2 = np.unique(label)
@@ -101,15 +102,17 @@ for i in u_labels_2:
     plt.scatter(clustered_dataset_2d[label == i , 0] , clustered_dataset_2d[label == i , 1] , label = i)
 plt.scatter(generated_spikes_2d[:,0] , generated_spikes_2d[:,1] , s = 80, color = 'k')
 plt.legend()
-plt.savefig("GSE84426_K-medoids_ADM_2d.png")
+plt.savefig("GSE84426_K-means_ADM_2d.png")
 # pu.plot3dwithspike(width=9, height=6, title= "Clustering with true aggregated distance matrix", datapoints = clustered_dataset_3d, spikes=generated_spikes_3d, myLabel=pred_label_gtdm)
 
-cu.unsupervised_evaluation_scores(global_true_euc_dist, "Aggregated True Distance Matrix",  true_label, pred_label_gtdm, adj_rand=True, adj_mutual_info=True, f1=True, silhouette=False, davies_bouldin=True)
+# cu.unsupervised_evaluation_scores(global_true_euc_dist, "Aggregated True Distance Matrix",  true_label, pred_label_gtdm, adj_rand=True, adj_mutual_info=True, f1=True, silhouette=False, davies_bouldin=True)
 
 
 global_fed_euc_dist = cu.calc_fed_euc_dist([euc_dist_D1_spikes, euc_dist_D2_spikes])
 
-label = KMedoids(n_clusters=14, metric='precomputed',method='pam').fit_predict(global_fed_euc_dist)
+# label = KMedoids(n_clusters=14, metric='precomputed',method='pam').fit_predict(global_fed_euc_dist)
+label = KMeans(n_clusters=14).fit_predict(global_fed_euc_dist)
+
 #Getting unique labels
 u_labels_2 = np.unique(label)
 pred_label_gfdm =  np.array(label).tolist()
@@ -122,7 +125,7 @@ for i in u_labels_2:
     plt.scatter(clustered_dataset_2d[label == i , 0] , clustered_dataset_2d[label == i , 1] , label = i)
 plt.scatter(generated_spikes_2d[:,0] , generated_spikes_2d[:,1] , s = 80, color = 'k')
 plt.legend()
-plt.savefig("GSE84426_K-medoids_FEDM_2d.png")
+plt.savefig("GSE84426_K-means_FEDM_2d.png")
 # pu.plot3dwithspike(width=9, height=6, title= "Clustering with globally federated distance matrix", datapoints = clustered_dataset_3d, spikes=generated_spikes_3d, myLabel=pred_label_gfdm)
 
 cu.unsupervised_evaluation_scores(global_fed_euc_dist, "Global Federated Distance Matrix",  pred_label_gtdm, pred_label_gfdm, adj_rand=True, adj_mutual_info=True, f1=True, silhouette=False, davies_bouldin=True)
@@ -135,7 +138,9 @@ MxCx.append(slope_intercept_D2)
 global_Mx, global_Cx = cu.construct_global_Mx_Cx_matrix(MxCx,[euc_dist_D1_spikes.shape[0], euc_dist_D2_spikes.shape[0]])
 global_pred_euc_dist = cu.calc_pred_dist_matrix(global_Mx, global_fed_euc_dist, global_Cx)
 
-label = KMedoids(n_clusters=14, metric='precomputed',method='pam').fit_predict(global_pred_euc_dist)
+# label = KMedoids(n_clusters=14, metric='precomputed',method='pam').fit_predict(global_pred_euc_dist)
+label = KMeans(n_clusters=14).fit_predict(global_pred_euc_dist)
+
 #Getting unique labels
 u_labels_2 = np.unique(label)
 pred_label_2 =  np.array(label).tolist()
@@ -148,7 +153,7 @@ for i in u_labels_2:
     plt.scatter(clustered_dataset_2d[label == i , 0] , clustered_dataset_2d[label == i , 1] , label = i)
 plt.scatter(generated_spikes_2d[:,0] , generated_spikes_2d[:,1] , s = 80, color = 'k')
 plt.legend()
-plt.savefig("GSE84426_K-medoids_PEDM_2d.png")
+plt.savefig("GSE84426_K-means_PEDM_2d.png")
 # pu.plot3dwithspike(width=9, height=6, title= "Clustering with globally predicted distance matrix", datapoints = clustered_dataset_3d, spikes=generated_spikes_3d, myLabel=pred_label_2)
 
 cu.unsupervised_evaluation_scores(global_pred_euc_dist, "Global Predicted Distance Matrix",  pred_label_gtdm, pred_label_2, adj_rand=True, adj_mutual_info=True, f1=True, silhouette=False, davies_bouldin=True)

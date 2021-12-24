@@ -13,6 +13,19 @@ import seaborn as sns
 from scipy.stats import spearmanr
 
 def generate_clustered_dataset(dimension,total_no_samples,no_of_cluster, random_state):
+    """ Transform n-D array to specific number of dimension based array
+
+    Args:
+        dimension (int): Number of dimension the dataset to be reduced
+        total_no_samples (int): Euclidean distance matrix between datapoints of a participant 
+        no_of_cluster (int): Whether dimension is considered to how much spike points will be generated. Default value is False
+        random_state (int): Reducing ratio for number of spike points i.e. the total number of spike points is divided by this value
+        induce (int): Inducing ratio for number of spike points i.e. the total number of spike points is multiplied by this value
+    Returns:
+        clustered_dataset (n-D array): Scikit-learn PCA object
+        true_label
+        centroids (n-D array): n-D NumPy array of transformed dataset
+    """
     clustered_dataset, true_label, centroids = make_blobs(n_samples=total_no_samples,
                                                           n_features=dimension, 
                                                           centers=no_of_cluster,
@@ -36,6 +49,18 @@ def optimal_no_of_cluster(euc_dist, range_n_clusters, threshold=0.95):
 
 
 def perform_PCA(dimension, dataset):
+    """ Transform n-D array to specific number of dimension based array
+
+    Args:
+        dimension (int): Number of dimension the dataset to be reduced
+        dataset (n-D array): Euclidean distance matrix between datapoints of a participant 
+        dimension_based (bool): Whether dimension is considered to how much spike points will be generated. Default value is False
+        reduce (int): Reducing ratio for number of spike points i.e. the total number of spike points is divided by this value
+        induce (int): Inducing ratio for number of spike points i.e. the total number of spike points is multiplied by this value
+    Returns:
+        pca (object): Scikit-learn PCA object
+        (n-D array) : n-D NumPy array of transformed dataset
+    """
     pca = PCA(n_components= dimension)
     return pca.fit_transform(dataset)
 
@@ -57,6 +82,15 @@ def get_uniform_SLDM(SLDMi, min_dim):
         return SLDMi
 
 def calc_fed_euc_dist(sldm_array):
+    """ Return the distance of the pairwise distances between each element of all the LSDM in list
+
+    Args:
+        sldm_array (list): Distance matrices each known as Local Spike Distance Matrix (LSDM) of all participants where each matrix 
+                           is the pairwise euclidean distance between the spike points and the data points of respective participant
+    
+    Returns:
+        (n-D array) : Global Federated Euclidean distance matrix between all datapoints of all participant(s)
+    """
     combined_eucl = np.concatenate(sldm_array)
     # rows are datapoints while columns are S1,S2..Sn etc
     # computing the distance of distance (e.g.: meta-distance)
@@ -64,6 +98,15 @@ def calc_fed_euc_dist(sldm_array):
     return euclidean_distances(combined_eucl)
 
 def construct_global_Mx_Cx_matrix(MxCx,dataset_len_array):
+    """ Return two matrices containing the slopes and intercepts for each datapoints of all participants
+
+    Args:
+        MxCx (list): List of slopes and intercepts of all the participant(s)
+        dataset_len_array (list): List of number of datapoints for each participant(s) 
+    Returns:
+        global_Mx (n-D array) : Matrix containing the slopes for each datapoints of all participants
+        global_Cx (n-D array) : Matrix containing the intercepts for each datapoints of all participants
+    """
     Mi,Ci = np.split(np.array(MxCx),2,axis=1)
     arrayMi=Mi.flatten()
     arrayCi=Ci.flatten()
@@ -84,19 +127,46 @@ def construct_global_Mx_Cx_matrix(MxCx,dataset_len_array):
     return global_Mx, global_Cx
 
 def calc_pred_dist_matrix(global_Mx, global_fed_euc_dist, global_Cx):
-    PGDM=np.add(np.multiply(global_Mx, global_fed_euc_dist),global_Cx)
-    #As distance between same points is 0
-    np.fill_diagonal(PGDM,0)
-    # print("Predicted Global Distance Matrix: \n",PGDM)
-    return PGDM
+    """ Return the distance matrix calculated from the slope and intercept returned from regression and after applying to FEDM
+
+    Args:
+        global_Mx (n-D array) : Matrix containing the slopes for each datapoints of all participants
+        global_fed_euc_dist (n-D array) : Matrix containing the distance of the pairwise distances between each element of all the participants' LSDM
+        global_Cx (n-D array) : Matrix containing the intercepts for each datapoints of all participants
+    Returns:
+        PEDM (n-D array) : Distance matrix calculated from the slope and intercept returned from regression and after applying to FEDM
+    """
+    # Multiply the slope with each value of FEDM followed by adding intercept with it 
+    # to minimize error of the distance between two points
+    PEDM=np.add(np.multiply(global_Mx, global_fed_euc_dist),global_Cx)
+    #Fill the diagonal value to 0 as distance between same point is 0
+    np.fill_diagonal(PEDM,0)
+    # print("Predicted Global Distance Matrix: \n",PEDM)
+    return PEDM
 
 def plotDistanceMatrix(distmat, title):
+    "Show heatmap of distance matrix"
     ax = plt.axes()
     sns.heatmap(distmat, ax = ax)
     ax.set_title(title)
     plt.savefig(title)
 
 def unsupervised_evaluation_scores(dist_matrix, dist_matrix_name, expected_label, actual_label, adj_rand=True, adj_mutual_info=True, f1=True, silhouette=False, davies_bouldin=True):
+    """ Evaluate and print the performance of clustering done by the distance matrix based on selected evaluation method, metric by providing expected and actual labels
+
+    Args:
+        dist_matrix (n-D array) : Distance matrix to evaluate the clustering done by it
+        dist_matrix_name (str) : Name of the distance matrix
+        expected_label (list) : List of integers containing the true label for each data points
+        actual_label (list) : List of integers containing the actual label for each data points after performing clustering with the distance matrix
+        adj_rand (bool) : Whether to calculate adjusted random score or not. Default value is True
+        adj_mutual_info (bool) : Whether to calculate adjusted mutual info score or not. Default value is True
+        f1 (bool) : Whether to calculate F1 score or not. Default value is True
+        silhouette (bool) : Whether to calculate Silhouette score or not. Default value is False
+        davies_bouldin (bool) : Whether to calculate Davies Bouldin score or not. Default value is True
+    Returns:
+        None
+    """
     print(f"Adjusted similarity score of the clustering with {dist_matrix_name} in (%) :", adjusted_rand_score(expected_label, actual_label)*100) if adj_rand == True else 0
     print(f"Adjusted mutual info score of the clustering with {dist_matrix_name} in (%) :", adjusted_mutual_info_score(expected_label, actual_label)*100) if adj_mutual_info == True else 0
     print(f"F1 score after clustering with {dist_matrix_name}:",f1_score(expected_label, actual_label, average='micro')) if f1 == True else 0
@@ -104,12 +174,29 @@ def unsupervised_evaluation_scores(dist_matrix, dist_matrix_name, expected_label
     print(f"Davies-Bouldin Score of {dist_matrix_name}: ", davies_bouldin_score(dist_matrix, actual_label)) if davies_bouldin == True else 0
     
 def pearson_corr_coeff(global_true_euc_dist, global_fed_euc_dist, global_pred_euc_dist):
+    """ Calculate and print Pearson correlation coefficient value of PEDM w.r.t ADM, FEDM w.r.t ADM and FEDM w.r.t PEDM
+
+    Args:
+        global_true_euc_dist (n-D array) : True or actual pairwise distance between all the data points of all participant(s)
+        global_fed_euc_dist (n-D array) : Matrix containing the distance of the pairwise distances between each element of all the participants' LSDM
+        global_pred_euc_dist (n-D array) : Distance matrix calculated from the slope and intercept returned from regression and after applying to FEDM
+    Returns:
+        None
+    """
     print("Pearson correlation between true and predicted global matrices:", np.corrcoef(global_true_euc_dist.flatten(),global_pred_euc_dist.flatten())[0,1])
     print("Pearson correlation between true and federated global matrices:", np.corrcoef(global_true_euc_dist.flatten(),global_fed_euc_dist.flatten())[0,1])
     print("Pearson correlation between federated and predicted global matrices:", np.corrcoef(global_fed_euc_dist.flatten(),global_pred_euc_dist.flatten())[0,1])
 
 def spearman_corr_coeff(global_true_euc_dist, global_fed_euc_dist, global_pred_euc_dist):
+    """ Calculate and print Spearman Rank correlation coefficient value of PEDM w.r.t ADM, FEDM w.r.t ADM and FEDM w.r.t PEDM
+
+    Args:
+        global_true_euc_dist (n-D array) : True or actual pairwise distance between all the data points of all participant(s)
+        global_fed_euc_dist (n-D array) : Matrix containing the distance of the pairwise distances between each element of all the participants' LSDM
+        global_pred_euc_dist (n-D array) : Distance matrix calculated from the slope and intercept returned from regression and after applying to FEDM
+    Returns:
+        None
+    """
     print("Spearman correlation between true and predicted global matrices:", spearmanr(global_true_euc_dist.flatten(),global_pred_euc_dist.flatten())[0])
     print("Spearman correlation between true and federated global matrices:", spearmanr(global_true_euc_dist.flatten(),global_fed_euc_dist.flatten())[0])
     print("Spearman correlation between federated and predicted global matrices:", spearmanr(global_fed_euc_dist.flatten(),global_pred_euc_dist.flatten())[0])
-
