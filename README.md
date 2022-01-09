@@ -1,4 +1,4 @@
-# Federated Distance and Similarity Measure Calculation for Unsupervised Machine Learning Algorithm
+# Calculating pairwise euclidean distance matrix for horizontally partitioned data in federated learning environment
 
 ## Project Overview:
 
